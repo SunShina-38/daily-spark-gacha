@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ひらめきガチャ</title>
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <link rel="stylesheet" href="styles.css?v=20260530-2" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div class="hero-copy">
+          <p class="eyebrow">今日の小さな遊び</p>
+          <h1 id="app-title">
+            <span>ひらめき</span>
+            <span>ガチャ</span>
+          </h1>
+          <p class="lead">
+            1回まわすだけで、今日の気分・称号・ちいさなミッションが出ます。
+          </p>
+        </div>
+        <div class="hero-visual" aria-label="ひらめきカードが飛び出すガチャのイラスト" role="img">
+          <div class="toy-machine">
+            <span class="toy-star">★</span>
+            <span class="toy-ball ball-one"></span>
+            <span class="toy-ball ball-two"></span>
+            <span class="toy-ball ball-three"></span>
+            <span class="toy-ball ball-four"></span>
+            <span class="toy-handle"></span>
+          </div>
+          <span class="idea-card card-light">!</span>
+          <span class="idea-card card-leaf">?</span>
+          <span class="idea-card card-pen">+</span>
+        </div>
+      </section>
+
+      <section class="machine" aria-label="ひらめきガチャ本体">
+        <div class="status-row">
+          <div>
+            <span class="label">今日のひらめき温度</span>
+            <strong id="sparkScore">--</strong>
+          </div>
+          <button
+            id="saveButton"
+            class="icon-button"
+            type="button"
+            aria-label="結果をお気に入りに保存"
+            onclick="window.hiramekiSave && window.hiramekiSave()"
+          >
+            ☆
+          </button>
+        </div>
+
+        <div id="capsule" class="capsule" aria-live="polite">
+          <p class="capsule-kind">まだ回していません</p>
+          <h2>ボタンを押すと、今日のカードが出ます</h2>
+          <p class="mission">気楽に1回どうぞ。</p>
+        </div>
+
+        <button id="spinButton" class="spin-button" type="button" onclick="window.hiramekiSpin && window.hiramekiSpin()">
+          ガチャをまわす
+        </button>
+      </section>
+
+      <section class="favorites" aria-labelledby="favorite-title">
+        <div class="section-heading">
+          <p class="eyebrow">メモ</p>
+          <h2 id="favorite-title">お気に入り</h2>
+        </div>
+        <ul id="favoriteList" class="favorite-list">
+          <li class="empty">気に入った結果は☆で残せます。</li>
+        </ul>
+      </section>
+    </main>
+
+    <script>
+      const hiramekiIdeas = [
+        ["じんわり回復", "机の上から、いちばん小さい不要物を1つだけ片づける人", "大掃除ではなく、1個だけで勝ちです。終わったら飲み物をひと口。"],
+        ["へんてこ創作", "今日の自分に、映画のサブタイトルをつける人", "例: 眠気の逆襲、洗濯物の帰還、やる気は午後から。声に出すと少し楽しいです。"],
+        ["小さな勇気", "3分だけ、先延ばし中のものに触る人", "終わらせなくてOK。ファイルを開く、メモを1行書く、道具を出すだけで合格。"],
+        ["観察あそび", "部屋の中から、今日のラッキーカラーを3つ探す人", "見つけた色を心の中でチェック。世界が少しゲーム画面になります。"],
+        ["やさしい連絡", "誰かに送らない短い手紙を書く人", "送らなくて大丈夫。ありがとう、助かった、元気かな、のどれか1つを書くだけ。"],
+        ["ひらめき採集", "気になる言葉を1つだけメモする人", "看板、曲名、記事、会話。あとで何かの種になるかもしれません。"],
+        ["ごきげん実験", "いつもの動作に効果音をつける人", "立つ、座る、保存する、送る。小声で効果音をつけると、作業が少し軽くなります。"],
+        ["未来の自分へ", "明日の自分が助かる置き土産を1つ残す人", "充電、メモ、服、タブ整理。未来の自分に小さな近道を作ります。"],
+      ];
+
+      let hiramekiCurrent = null;
+      let hiramekiSpinning = false;
+
+      function hiramekiPick() {
+        const idea = hiramekiIdeas[Math.floor(Math.random() * hiramekiIdeas.length)];
+        return {
+          kind: idea[0],
+          title: idea[1],
+          mission: idea[2],
+          score: Math.floor(Math.random() * 51) + 50,
+        };
+      }
+
+      function hiramekiRender(idea) {
+        const capsule = document.querySelector("#capsule");
+        const sparkScore = document.querySelector("#sparkScore");
+        const spinButton = document.querySelector("#spinButton");
+        const saveButton = document.querySelector("#saveButton");
+        const machine = document.querySelector(".machine");
+        const heroVisual = document.querySelector(".hero-visual");
+
+        capsule.classList.remove("pop");
+        window.requestAnimationFrame(() => capsule.classList.add("pop"));
+        capsule.innerHTML = `
+          <p class="capsule-kind">${idea.kind}</p>
+          <h2>${idea.title}</h2>
+          <p class="mission">${idea.mission}</p>
+        `;
+        sparkScore.textContent = `${idea.score}`;
+        saveButton.classList.remove("saved");
+        saveButton.textContent = "☆";
+        spinButton.disabled = false;
+        spinButton.textContent = "ガチャをまわす";
+        machine.classList.remove("spinning");
+        heroVisual.classList.remove("spinning");
+        hiramekiSpinning = false;
+      }
+
+      window.hiramekiSpin = () => {
+        if (hiramekiSpinning) {
+          return;
+        }
+
+        const capsule = document.querySelector("#capsule");
+        const sparkScore = document.querySelector("#sparkScore");
+        const spinButton = document.querySelector("#spinButton");
+        const machine = document.querySelector(".machine");
+        const heroVisual = document.querySelector(".hero-visual");
+
+        hiramekiSpinning = true;
+        hiramekiCurrent = hiramekiPick();
+        machine.classList.add("spinning");
+        heroVisual.classList.add("spinning");
+        spinButton.disabled = true;
+        spinButton.textContent = "回転中...";
+        sparkScore.textContent = "--";
+        capsule.innerHTML = `
+          <p class="capsule-kind">カラカラ回転中</p>
+          <h2>ひらめきを選んでいます</h2>
+          <p class="mission">少しだけ待ってください。</p>
+        `;
+
+        window.setTimeout(() => hiramekiRender(hiramekiCurrent), 720);
+      };
+
+      window.hiramekiSave = () => {
+        if (!hiramekiCurrent || hiramekiSpinning) {
+          window.hiramekiSpin();
+          return;
+        }
+
+        const saveButton = document.querySelector("#saveButton");
+        const favoriteList = document.querySelector("#favoriteList");
+        const item = document.createElement("li");
+        item.innerHTML = `<strong>${hiramekiCurrent.kind}</strong><br>${hiramekiCurrent.title}`;
+        favoriteList.querySelector(".empty")?.remove();
+        favoriteList.prepend(item);
+        saveButton.classList.add("saved");
+        saveButton.textContent = "★";
+      };
+    </script>
+  </body>
+</html>
